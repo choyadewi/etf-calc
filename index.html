@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ETF Calc</title>
+
+<link rel="icon" type="image/png" href="icon.png" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1B4332" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ETF Calc" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<style>
+  :root{
+    --cream:#FAF6EF; --green:#1B4332; --gold:#C9A227; --sage:#7A9E7E;
+    --brown:#8C5E3C; --slate:#4A6670; --ink:#2B2B26; --line:#E4DCC8; --panel:#FFFFFF99;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .serif{font-family:Georgia,Cambria,"Times New Roman",serif;}
+  header{padding:2.2rem 1.5rem 1.2rem;border-bottom:1px solid var(--line);position:relative;}
+  .eyebrow{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--brown);font-weight:700;margin:0 0 .4rem;}
+  h1{font-size:1.8rem;font-weight:700;color:var(--green);margin:0 0 .5rem;line-height:1.2;}
+  .sub{color:#5A5648;max-width:36rem;margin:0;font-size:.95rem;}
+  .langtoggle{position:absolute;top:1.4rem;right:1.5rem;display:flex;border:1px solid var(--line);border-radius:2rem;overflow:hidden;}
+  .langtoggle button{border:none;background:transparent;padding:.35rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;color:var(--brown);}
+  .langtoggle button.active{background:var(--green);color:var(--cream);}
+  main{max-width:56rem;margin:0 auto;padding:1.5rem;}
+  .layout{display:flex;flex-direction:column;gap:1.5rem;}
+  @media(min-width:900px){.layout{flex-direction:row;align-items:flex-start;}}
+  nav{display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.3rem;}
+  @media(min-width:900px){nav{flex-direction:column;width:260px;flex-shrink:0;}}
+  .navbtn{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;border-radius:.8rem;border:1px solid var(--line);
+    background:transparent;font-weight:600;font-size:.88rem;white-space:nowrap;cursor:pointer;color:var(--ink);}
+  .navbtn.active{color:var(--cream);}
+  .totalbox{margin-top:1rem;padding:1rem;border-radius:.8rem;background:var(--green);color:var(--cream);display:none;}
+  @media(min-width:900px){.totalbox{display:block;}}
+  .totalbox .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;opacity:.7;margin:0 0 .2rem;}
+  .totalbox .val{font-size:1.4rem;font-weight:700;margin:0;}
+  .totalbox .sub2{font-size:.72rem;opacity:.7;margin:.2rem 0 0;}
+  section{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.2rem;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:1rem;padding:1.4rem;}
+  .card h2,.card h3{color:var(--green);margin:0 0 .3rem;}
+  .card h2{font-size:1.4rem;font-weight:700;}
+  .card h3{font-size:1.15rem;font-weight:700;}
+  .desc{color:#5A5648;font-size:.85rem;margin:0 0 1rem;}
+  label.field{font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--brown);font-weight:700;display:block;margin-bottom:.4rem;}
+  input[type=number]{width:100%;padding:.55rem .7rem;border-radius:.6rem;border:1px solid var(--line);background:#fff;font-size:.95rem;}
+  input[type=range]{width:100%;accent-color:var(--green);}
+  .grid2{display:grid;grid-template-columns:1fr;gap:1.2rem;}
+  @media(min-width:600px){.grid2{grid-template-columns:1fr 1fr;}}
+  .hint{font-size:.72rem;color:var(--brown);margin-top:.3rem;}
+  .rangelabels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--brown);margin-top:.2rem;}
+  .resultrow{display:flex;flex-direction:column;gap:1.2rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--line);}
+  @media(min-width:600px){.resultrow{flex-direction:row;}}
+  .resultrow .item{flex:1;}
+  .resultrow .big{font-family:Georgia,serif;font-weight:700;font-size:clamp(1.2rem,4vw,1.8rem);margin:.2rem 0 0;word-break:break-word;}
+  .bar-outer{height:.6rem;border-radius:1rem;background:var(--line);overflow:hidden;}
+  .bar-inner{height:100%;border-radius:1rem;}
+  .chartwrap{display:flex;align-items:flex-end;gap:.6rem;height:180px;padding-top:1rem;}
+  .chartbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .chartbar .fill{width:70%;border-radius:.4rem .4rem 0 0;transition:height .3s;}
+  .chartbar .lbl{font-size:.68rem;color:#5A5648;margin-top:.4rem;text-align:center;}
+  .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.8rem 1rem;
+    border-radius:.8rem;font-weight:700;font-size:.9rem;border:none;cursor:pointer;background:var(--green);color:var(--cream);}
+  .stocklist,.etflist{display:flex;flex-direction:column;}
+  .row-item{display:flex;align-items:center;gap:.7rem;padding:.6rem 0;border-bottom:1px solid var(--line);}
+  .row-item:last-child{border-bottom:none;}
+  .badge{flex-shrink:0;font-size:.62rem;font-weight:700;text-transform:uppercase;padding:.25rem .5rem;border-radius:1rem;color:var(--cream);}
+  .rankball{flex-shrink:0;width:1.8rem;height:1.8rem;border-radius:50%;color:var(--cream);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;font-family:Georgia,serif;}
+  .name{font-weight:700;margin:0;}
+  .name small{font-weight:400;color:var(--brown);}
+  .meta{font-size:.72rem;color:#5A5648;margin:.1rem 0 0;}
+  .instrument{border:1px solid var(--line);border-radius:.7rem;padding:.8rem;margin-bottom:.7rem;}
+  .instrument .top{display:flex;justify-content:space-between;gap:.6rem;margin-bottom:.3rem;}
+  .instrument p{margin:0 0 .5rem;font-size:.85rem;color:#5A5648;}
+  .allocrow{display:flex;align-items:center;gap:.6rem;}
+  .allocrow .bar-outer{flex:1;}
+  .allocrow .pct{font-size:.78rem;font-weight:700;flex-shrink:0;}
+  .info{display:flex;gap:.5rem;font-size:.72rem;color:var(--brown);margin-top:.8rem;align-items:flex-start;}
+  .kv{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;}
+  .kv .k{font-size:.85rem;color:#5A5648;}
+  .kv .v{font-size:.85rem;font-weight:700;}
+  footer{text-align:center;font-size:.72rem;color:var(--brown);padding:2rem 1rem 3rem;font-style:italic;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="langtoggle" id="langtoggle">
+    <button data-lang="id">ID</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <p class="eyebrow" id="t-eyebrow"></p>
+  <h1 class="serif" id="t-title"></h1>
+  <p class="sub" id="t-sub"></p>
+</header>
+
+<main>
+  <div class="layout">
+    <nav id="nav"></nav>
+    <section id="content"></section>
+  </div>
+</main>
+
+<footer id="t-footer"></footer>
+
+<script>
+/* ---------- language ---------- */
+let lang = "id";
+
+const UI = {
+  id: {
+    eyebrow: "Sekolah ETF Indonesia",
+    title: "ETF Calc",
+    sub: "Atur tahun, tentukan target, dan lihat berapa yang perlu kamu sisihkan tiap bulan — untuk pensiun, sekolah anak, kesehatan, dana darurat, sampai liburan.",
+    footer: "Sekolah ETF Indonesia",
+    totalPerBulan: "Total per bulan", totalGabungan: "gabungan 5 tujuan di atas",
+    targetHariIni: "Target (nilai uang saat ini)",
+    jangkaWaktu: (t)=>`Jangka waktu — ${t} tahun`, thMin:"1 th", thMax:"40 th",
+    estimasiReturn: (r)=>`Estimasi return investasi / tahun — ${r}%`,
+    estimasiInflasi: (i)=>`Estimasi inflasi / tahun — ${i}%`,
+    nilaiTargetDi: (t)=>`Nilai target di tahun ke-${t}`,
+    perluDitabung: "Perlu ditabung / bulan",
+    progresTabungan: "Progres Tabungan",
+    progresDesc: (l)=>`Sudah nabung berapa untuk ${l}? Tersimpan otomatis di perangkat ini.`,
+    totalTerkumpul: "Total yang sudah terkumpul",
+    dariTarget: "dari target", sisa: "Sisa",
+    unduh: "Unduh Ringkasan Lengkap (.txt)",
+    ringkasanChart: "Ringkasan tabungan bulanan per tujuan",
+    cekKeterjangkauan: "Cek Keterjangkauan",
+    cekDesc: "Masukkan pendapatan bulanan untuk lihat apakah total tabungan di atas realistis.",
+    pendapatan: "Pendapatan bulanan (take-home)",
+    porsiPendapatan: "Porsi dari pendapatan",
+    statusAman: "Sangat aman", statusRealistis: "Realistis", statusKetat: "Ketat", statusTidak: "Tidak realistis",
+    saranAman: "Porsi tabungan wajar, masih banyak ruang untuk kebutuhan lain.",
+    saranRealistis: "Porsi tabungan sehat untuk banyak orang, tapi tetap pastikan kebutuhan pokok tercukupi.",
+    saranKetat: "Cukup berat. Pertimbangkan perpanjang jangka waktu beberapa tujuan atau kecilkan targetnya.",
+    saranTidak: "Kemungkinan besar tidak bisa dijalankan konsisten. Coba perpanjang jangka waktu tujuan-tujuan jangka panjang seperti pensiun.",
+    pilihanInstrumen: (l)=>`Pilihan Instrumen untuk ${l}`,
+    top10Title: "10 Saham Terbesar Dunia",
+    top10Desc: "Berdasarkan kapitalisasi pasar, per Juli 2026. Angka berubah tiap hari, anggap sebagai gambaran umum.",
+    top10Info: "Bukan rekomendasi beli. Saham-saham ini membentuk sebagian besar bobot ETF seperti VOO dan QQQ di atas.",
+    portoTitle: "Portofolio Kamu Dibanding Top 10 Dunia",
+    portoTotal: "Total alokasi", portoTop10: "Top 10", portoLuar: "Di luar",
+    portoPct: "dari portofolio",
+    portoInfo: "NVDA, MSFT, AVGO, AMZN, TSM ada di Top 10 dunia. ASML & IBM strategis tapi di luar top 10. IonQ & Rigetti adalah saham quantum computing — kecil dan lebih spekulatif.",
+    etfTitle: "Pilihan ETF populer untuk mulai investasi",
+    etfDesc: "Bisa diakses lewat Gotrade, Pluang, atau IBKR. Bukan rekomendasi personal — sesuaikan dengan profil risiko kamu.",
+    biaya: "Biaya", risikoLbl: "Risiko",
+  },
+  en: {
+    eyebrow: "Sekolah ETF Indonesia",
+    title: "ETF Calc",
+    sub: "Set the years, set your target, and see how much to set aside each month — for retirement, your kid's education, health, an emergency fund, even travel.",
+    footer: "Sekolah ETF Indonesia",
+    totalPerBulan: "Total per month", totalGabungan: "combined across 5 goals above",
+    targetHariIni: "Target (in today's money)",
+    jangkaWaktu: (t)=>`Time horizon — ${t} years`, thMin:"1 yr", thMax:"40 yr",
+    estimasiReturn: (r)=>`Estimated annual return — ${r}%`,
+    estimasiInflasi: (i)=>`Estimated annual inflation — ${i}%`,
+    nilaiTargetDi: (t)=>`Target value in year ${t}`,
+    perluDitabung: "Needed per month",
+    progresTabungan: "Savings Progress",
+    progresDesc: (l)=>`How much have you saved for ${l} so far? Saved automatically on this device.`,
+    totalTerkumpul: "Total saved so far",
+    dariTarget: "of target", sisa: "Remaining",
+    unduh: "Download Full Summary (.txt)",
+    ringkasanChart: "Monthly savings summary by goal",
+    cekKeterjangkauan: "Affordability Check",
+    cekDesc: "Enter your monthly income to see if the total savings above is realistic.",
+    pendapatan: "Monthly income (take-home)",
+    porsiPendapatan: "Share of income",
+    statusAman: "Very comfortable", statusRealistis: "Realistic", statusKetat: "Tight", statusTidak: "Not realistic",
+    saranAman: "A reasonable savings load, plenty of room left for other needs.",
+    saranRealistis: "A healthy savings load for most people, just make sure essentials are still covered.",
+    saranKetat: "Fairly heavy. Consider extending the time horizon on some goals or lowering the targets.",
+    saranTidak: "Likely hard to sustain consistently. Try extending the horizon on long-term goals like retirement.",
+    pilihanInstrumen: (l)=>`Suggested Instruments for ${l}`,
+    top10Title: "World's 10 Largest Stocks",
+    top10Desc: "By market capitalization, as of July 2026. Figures move daily — treat this as a general picture.",
+    top10Info: "Not a buy recommendation. These stocks make up most of the weight in ETFs like VOO and QQQ above.",
+    portoTitle: "Your Portfolio vs. the Top 10",
+    portoTotal: "Total allocation", portoTop10: "Top 10", portoLuar: "Outside",
+    portoPct: "of portfolio",
+    portoInfo: "NVDA, MSFT, AVGO, AMZN, TSM are in the global Top 10. ASML & IBM are strategic but outside the top 10. IonQ & Rigetti are quantum-computing stocks — small and more speculative.",
+    etfTitle: "Popular ETFs to start investing",
+    etfDesc: "Accessible via Gotrade, Pluang, or IBKR. Not personal advice — match it to your own risk profile.",
+    biaya: "Expense ratio", risikoLbl: "Risk",
+  }
+};
+
+/* ---------- data (bilingual) ---------- */
+const GOALS_DEFAULT = [
+  { id:"pensiun", label:{id:"Dana Pensiun", en:"Retirement Fund"}, icon:"🏦", target:5000000000, tahun:30, ret:8, inf:4, color:"#1B4332" },
+  { id:"sekolah", label:{id:"Uang Sekolah Anak", en:"Kids' Education Fund"}, icon:"🎓", target:300000000, tahun:15, ret:7, inf:6, color:"#C9A227" },
+  { id:"kesehatan", label:{id:"Dana Kesehatan", en:"Health Fund"}, icon:"❤️", target:200000000, tahun:10, ret:6, inf:5, color:"#7A9E7E" },
+  { id:"darurat", label:{id:"Dana Darurat", en:"Emergency Fund"}, icon:"🛡️", target:60000000, tahun:2, ret:4, inf:3, color:"#8C5E3C" },
+  { id:"jalan", label:{id:"Jalan-Jalan", en:"Travel Fund"}, icon:"✈️", target:30000000, tahun:3, ret:6, inf:3, color:"#4A6670" },
+];
+
+const ETF_LIST = [
+  { nama:"VOO", full:"Vanguard S&P 500 ETF", desc:{id:"Melacak 500 perusahaan besar AS. Pilihan inti paling populer untuk pemula.", en:"Tracks the 500 largest US companies. The most popular core holding for beginners."}, exp:"0.03%", risiko:{id:"Sedang", en:"Medium"} },
+  { nama:"VTI", full:"Vanguard Total Stock Market ETF", desc:{id:"Mencakup hampir seluruh pasar saham AS, dari besar sampai kecil.", en:"Covers nearly the entire US stock market, from large to small caps."}, exp:"0.03%", risiko:{id:"Sedang", en:"Medium"} },
+  { nama:"QQQ", full:"Invesco QQQ Trust", desc:{id:"100 perusahaan non-finansial terbesar di Nasdaq, berat ke teknologi.", en:"The 100 largest non-financial Nasdaq companies, tech-heavy."}, exp:"0.20%", risiko:{id:"Sedang-Tinggi", en:"Medium-High"} },
+  { nama:"SCHD", full:"Schwab US Dividend Equity ETF", desc:{id:"Fokus perusahaan pembagi dividen stabil, cocok untuk passive income.", en:"Focuses on stable dividend payers, good for passive income."}, exp:"0.06%", risiko:{id:"Sedang-Rendah", en:"Medium-Low"} },
+  { nama:"VT", full:"Vanguard Total World Stock ETF", desc:{id:"Diversifikasi ke seluruh dunia (AS + global) dalam satu ETF.", en:"Global diversification (US + international) in a single ETF."}, exp:"0.07%", risiko:{id:"Sedang", en:"Medium"} },
+];
+
+const TOP10_STOCKS = [
+  { rank:1, ticker:"NVDA", nama:"Nvidia", cap:"~$4.9T", sektor:{id:"Chip & Kecerdasan Buatan", en:"Chips & AI"} },
+  { rank:2, ticker:"GOOGL", nama:"Alphabet (Google)", cap:"~$4.3T", sektor:{id:"Teknologi", en:"Technology"} },
+  { rank:3, ticker:"AAPL", nama:"Apple", cap:"~$4.3T", sektor:{id:"Teknologi", en:"Technology"} },
+  { rank:4, ticker:"MSFT", nama:"Microsoft", cap:"~$2.8T", sektor:{id:"Perangkat Lunak & Cloud", en:"Software & Cloud"} },
+  { rank:5, ticker:"AMZN", nama:"Amazon", cap:"~$2.6–2.9T", sektor:{id:"E-dagang & Cloud", en:"E-commerce & Cloud"} },
+  { rank:6, ticker:"AVGO", nama:"Broadcom", cap:"~$1.9–2.0T", sektor:{id:"Chip & Kecerdasan Buatan", en:"Chips & AI"} },
+  { rank:7, ticker:"TSM", nama:"TSMC", cap:"~$1.9–2.1T", sektor:{id:"Produsen Chip", en:"Chip Manufacturer"} },
+  { rank:8, ticker:"META", nama:"Meta Platforms", cap:"~$1.6–1.7T", sektor:{id:"Media Sosial", en:"Social Media"} },
+  { rank:9, ticker:"TSLA", nama:"Tesla", cap:"~$1.6–1.7T", sektor:{id:"Otomotif & Energi", en:"Auto & Energy"} },
+  { rank:10, ticker:"SSNLF", nama:"Samsung Electronics", cap:"~$1.1T", sektor:{id:"Elektronik", en:"Electronics"} },
+];
+const TOP10_TICKERS = new Set(TOP10_STOCKS.map(s=>s.ticker));
+
+const MY_PORTFOLIO = [
+  { ticker:"NVDA", nama:"NVIDIA", nominal:2500000, ytd:5.0, ttm:23.7 },
+  { ticker:"MSFT", nama:"Microsoft", nominal:2000000, ytd:-18.9, ttm:-19.9 },
+  { ticker:"AVGO", nama:"Broadcom", nominal:2000000, ytd:7.5, ttm:36.2 },
+  { ticker:"AMZN", nama:"Amazon", nominal:1500000, ytd:5.9, ttm:15.0 },
+  { ticker:"TSM", nama:"TSMC", nominal:1500000, ytd:45.0, ttm:108.7 },
+  { ticker:"ASML", nama:"ASML", nominal:1500000, ytd:65.4, ttm:118.4 },
+  { ticker:"IBM", nama:"IBM", nominal:1500000, ytd:-3.8, ttm:-2.2 },
+  { ticker:"IONQ", nama:"IonQ", nominal:1250000, ytd:8.0, ttm:38.1 },
+  { ticker:"RGTI", nama:"Rigetti Computing", nominal:0, ytd:-28.0, ttm:32.5 },
+];
+
+const REKOMENDASI = {
+  pensiun:{
+    catatan:{id:"Horizon sangat panjang, jadi bisa menanggung volatilitas jangka pendek demi pertumbuhan maksimal.",
+      en:"Very long horizon, so it can absorb short-term volatility in exchange for maximum growth."},
+    instrumen:[
+      {nama:"VOO / VTI", alasan:{id:"ETF inti berbasis S&P 500 / seluruh pasar saham AS. Fondasi utama portofolio jangka panjang.", en:"Core S&P 500 / total US market ETF. The main foundation of a long-term portfolio."}, risiko:{id:"Sedang", en:"Medium"}, alokasi:60},
+      {nama:"QQQ", alasan:{id:"Porsi tambahan untuk pertumbuhan lebih agresif lewat saham teknologi Nasdaq.", en:"Extra allocation for more aggressive growth via Nasdaq tech stocks."}, risiko:{id:"Sedang-Tinggi", en:"Medium-High"}, alokasi:30},
+      {nama:"Saham individual (NVDA, MSFT, AVGO)", alasan:{id:"Porsi kecil, opsional, untuk exposure lebih terarah ke tema AI/teknologi.", en:"A small, optional slice for more targeted exposure to the AI/tech theme."}, risiko:{id:"Tinggi", en:"High"}, alokasi:10},
+    ]},
+  sekolah:{
+    catatan:{id:"Ada tanggal jatuh tempo pasti. Pakai strategi \u201cglide path\u201d: agresif di awal, makin konservatif mendekati waktunya.",
+      en:"Has a fixed due date. Use a \u201cglide path\u201d: aggressive early on, more conservative as the date approaches."},
+    instrumen:[
+      {nama:"VOO / VTI (tahun-tahun awal)", alasan:{id:"Pertumbuhan modal selama dana masih punya banyak waktu untuk pulih dari koreksi pasar.", en:"Capital growth while the fund still has plenty of time to recover from market corrections."}, risiko:{id:"Sedang", en:"Medium"}, alokasi:60},
+      {nama:"SCHD (mendekati H-5 tahun)", alasan:{id:"Mulai geser sebagian ke ETF dividen yang lebih stabil untuk kurangi volatilitas.", en:"Start shifting part of it into a more stable dividend ETF to reduce volatility."}, risiko:{id:"Sedang-Rendah", en:"Medium-Low"}, alokasi:25},
+      {nama:"Deposito / reksadana pasar uang (3 tahun terakhir)", alasan:{id:"Kunci nilai yang sudah terkumpul, hindari risiko pasar turun tepat saat dana dibutuhkan.", en:"Lock in what's been saved, avoid the risk of a market drop right when the funds are needed."}, risiko:{id:"Rendah", en:"Low"}, alokasi:15},
+    ]},
+  kesehatan:{
+    catatan:{id:"Horizon menengah — cukup panjang untuk saham, tapi perlu porsi lebih stabil karena kebutuhan bisa muncul lebih cepat dari rencana.",
+      en:"Medium horizon — long enough for equities, but needs a more stable slice since needs can arise sooner than planned."},
+    instrumen:[
+      {nama:"VOO / VTI", alasan:{id:"Fondasi pertumbuhan utama selama horizon berjalan.", en:"The main growth foundation for the duration of the horizon."}, risiko:{id:"Sedang", en:"Medium"}, alokasi:55},
+      {nama:"SCHD", alasan:{id:"Porsi dividen untuk stabilitas dan sedikit passive income.", en:"A dividend slice for stability and a little passive income."}, risiko:{id:"Sedang-Rendah", en:"Medium-Low"}, alokasi:30},
+      {nama:"Reksadana pasar uang (porsi kecil)", alasan:{id:"Buffer likuid untuk kebutuhan kesehatan mendadak yang tidak bisa menunggu.", en:"A liquid buffer for sudden health needs that can't wait."}, risiko:{id:"Rendah", en:"Low"}, alokasi:15},
+    ]},
+  darurat:{
+    catatan:{id:"TIDAK disarankan diisi saham/ETF. Kalau nilainya turun justru saat dibutuhkan, tujuannya gagal. Prioritaskan likuiditas, bukan return maksimal.",
+      en:"NOT recommended to hold stocks/ETFs here. If the value drops right when it's needed, the whole point fails. Prioritize liquidity, not maximum return."},
+    instrumen:[
+      {nama:"Rekening tabungan / rekening berjangka pendek", alasan:{id:"Akses cepat, nilai pokok tidak berfluktuasi.", en:"Fast access, principal value doesn't fluctuate."}, risiko:{id:"Sangat Rendah", en:"Very Low"}, alokasi:40},
+      {nama:"Deposito jangka pendek (1\u20136 bulan, ditaruh bertahap)", alasan:{id:"Return sedikit lebih baik dari tabungan biasa, tetap likuid dalam hitungan bulan.", en:"Slightly better return than a regular savings account, still liquid within months."}, risiko:{id:"Sangat Rendah", en:"Very Low"}, alokasi:40},
+      {nama:"Reksadana pasar uang", alasan:{id:"Likuid (cair 1\u20132 hari kerja) dengan return sedikit di atas tabungan.", en:"Liquid (cashes out in 1\u20132 business days) with a return slightly above savings."}, risiko:{id:"Rendah", en:"Low"}, alokasi:20},
+    ]},
+  jalan:{
+    catatan:{id:"Horizon pendek seperti dana darurat — utamakan dana aman dan likuid, bukan pertumbuhan.",
+      en:"Short horizon like an emergency fund — prioritize safety and liquidity over growth."},
+    instrumen:[
+      {nama:"Tabungan terpisah / rekening berjangka pendek", alasan:{id:"Mudah dipantau, tidak tercampur dana lain, nilai tidak berfluktuasi.", en:"Easy to track, kept separate from other funds, value doesn't fluctuate."}, risiko:{id:"Sangat Rendah", en:"Very Low"}, alokasi:50},
+      {nama:"Deposito jangka pendek", alasan:{id:"Return sedikit lebih baik dari tabungan biasa, tetap cair sebelum waktu liburan.", en:"Slightly better return than regular savings, still available before your trip."}, risiko:{id:"Sangat Rendah", en:"Very Low"}, alokasi:30},
+      {nama:"Reksadana pasar uang", alasan:{id:"Likuid dan return sedikit di atas tabungan.", en:"Liquid, with a return slightly above savings."}, risiko:{id:"Rendah", en:"Low"}, alokasi:20},
+    ]},
+};
+
+/* ---------- state ---------- */
+let goals = JSON.parse(JSON.stringify(GOALS_DEFAULT));
+let active = goals[0].id;
+let progress = {};
+let pendapatan = 0;
+
+try {
+  const saved = JSON.parse(localStorage.getItem("kalkulator-data-tabungan") || "{}");
+  progress = saved.progress || {};
+  pendapatan = saved.pendapatan || 0;
+  if (saved.lang) lang = saved.lang;
+} catch(e) {}
+
+function saveLocal(){
+  try { localStorage.setItem("kalkulator-data-tabungan", JSON.stringify({progress, pendapatan, lang})); } catch(e){}
+}
+
+/* ---------- helpers ---------- */
+function fmt(n){ return "Rp" + Math.round(n||0).toLocaleString("id-ID"); }
+function tr(field){ return field[lang]; }
+function hitung(target, tahun, ret, inf){
+  const fv = target * Math.pow(1+inf/100, tahun);
+  const i = Math.pow(1+ret/100, 1/12) - 1;
+  const n = tahun*12;
+  const pmt = i===0 ? fv/n : (fv*i)/(Math.pow(1+i,n)-1);
+  return {fv, pmt};
+}
+function results(){
+  return goals.map(g=>{ const {fv,pmt}=hitung(g.target,g.tahun,g.ret,g.inf); return {...g, fv, pmt}; });
+}
+
+/* ---------- render ---------- */
+function render(){
+  const t = UI[lang];
+  document.documentElement.lang = lang;
+  document.getElementById("t-eyebrow").textContent = t.eyebrow;
+  document.getElementById("t-title").textContent = t.title;
+  document.getElementById("t-sub").textContent = t.sub;
+  document.getElementById("t-footer").textContent = t.footer;
+  document.querySelectorAll("#langtoggle button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.lang===lang);
+  });
+
+  const res = results();
+  const totalBulanan = res.reduce((s,r)=>s+r.pmt,0);
+  const activeGoal = res.find(g=>g.id===active);
+
+  const nav = document.getElementById("nav");
+  nav.innerHTML = res.map(g=>`
+    <button class="navbtn ${g.id===active?'active':''}" data-goal="${g.id}"
+      style="background:${g.id===active?g.color:'transparent'};border-color:${g.id===active?g.color:'var(--line)'}">
+      <span>${g.icon}</span><span>${tr(g.label)}</span>
+    </button>`).join("") + `
+    <div class="totalbox">
+      <p class="lbl">${t.totalPerBulan}</p>
+      <p class="val">${fmt(totalBulanan)}</p>
+      <p class="sub2">${t.totalGabungan}</p>
+    </div>`;
+  nav.querySelectorAll("[data-goal]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ active = btn.dataset.goal; render(); });
+  });
+
+  const terkumpul = progress[activeGoal.id] || 0;
+  const persenProgress = activeGoal.fv ? Math.min(100,(terkumpul/activeGoal.fv)*100) : 0;
+  const sisa = Math.max(0, activeGoal.fv - terkumpul);
+
+  const maxBulanan = Math.max(...res.map(r=>r.pmt));
+
+  let afford = "";
+  if (pendapatan > 0){
+    const rasio = (totalBulanan/pendapatan)*100;
+    let status,warna,saran;
+    if(rasio<=20){status=t.statusAman;warna="#1B4332";saran=t.saranAman;}
+    else if(rasio<=35){status=t.statusRealistis;warna="#7A9E7E";saran=t.saranRealistis;}
+    else if(rasio<=50){status=t.statusKetat;warna="#C9A227";saran=t.saranKetat;}
+    else {status=t.statusTidak;warna="#A34A28";saran=t.saranTidak;}
+    afford = `
+      <div class="kv" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)">
+        <span class="k">${t.porsiPendapatan}</span>
+        <span class="v" style="color:${warna}">${rasio.toFixed(1)}% — ${status}</span>
+      </div>
+      <div class="bar-outer"><div class="bar-inner" style="width:${Math.min(100,rasio)}%;background:${warna}"></div></div>
+      <p class="desc" style="margin-top:.6rem">${saran}</p>`;
+  }
+
+  const rek = REKOMENDASI[activeGoal.id];
+  const totalPorto = MY_PORTFOLIO.reduce((s,p)=>s+p.nominal,0);
+
+  document.getElementById("content").innerHTML = `
+    <div class="card">
+      <h2 class="serif">${activeGoal.icon} ${tr(activeGoal.label)}</h2>
+      <div class="grid2" style="margin-top:1rem">
+        <div>
+          <label class="field">${t.targetHariIni}</label>
+          <input type="number" id="in-target" value="${activeGoal.target}">
+          <p class="hint">${fmt(activeGoal.target)}</p>
+        </div>
+        <div>
+          <label class="field">${t.jangkaWaktu(activeGoal.tahun)}</label>
+          <input type="range" id="in-tahun" min="1" max="40" value="${activeGoal.tahun}">
+          <div class="rangelabels"><span>${t.thMin}</span><span>${t.thMax}</span></div>
+        </div>
+        <div>
+          <label class="field">${t.estimasiReturn(activeGoal.ret)}</label>
+          <input type="range" id="in-ret" min="1" max="15" step="0.5" value="${activeGoal.ret}">
+        </div>
+        <div>
+          <label class="field">${t.estimasiInflasi(activeGoal.inf)}</label>
+          <input type="range" id="in-inf" min="0" max="12" step="0.5" value="${activeGoal.inf}">
+        </div>
+      </div>
+      <div class="resultrow">
+        <div class="item">
+          <p class="hint" style="margin:0">${t.nilaiTargetDi(activeGoal.tahun)}</p>
+          <p class="big serif">${fmt(activeGoal.fv)}</p>
+        </div>
+        <div class="item">
+          <p class="hint" style="margin:0">${t.perluDitabung}</p>
+          <p class="big serif" style="color:${activeGoal.color}">${fmt(activeGoal.pmt)}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="serif" style="color:${activeGoal.color}">${t.progresTabungan}</h3>
+      <p class="desc">${t.progresDesc(tr(activeGoal.label))}</p>
+      <label class="field">${t.totalTerkumpul}</label>
+      <input type="number" id="in-progress" value="${terkumpul}">
+      <p class="hint">${fmt(terkumpul)}</p>
+      <div class="kv" style="margin-top:1rem">
+        <span class="k">${persenProgress.toFixed(1)}% ${t.dariTarget}</span>
+        <span class="k">${t.sisa}: ${fmt(sisa)}</span>
+      </div>
+      <div class="bar-outer"><div class="bar-inner" style="width:${persenProgress}%;background:${activeGoal.color}"></div></div>
+    </div>
+
+    <button class="btn" id="btn-download">⬇ ${t.unduh}</button>
+
+    <div class="card">
+      <h3 class="serif" style="color:#1B4332">📈 ${t.ringkasanChart}</h3>
+      <div class="chartwrap">
+        ${res.map(r=>`
+          <div class="chartbar">
+            <div class="fill" style="height:${Math.max(4,(r.pmt/maxBulanan)*140)}px;background:${r.color}"></div>
+            <div class="lbl">${tr(r.label).split(" ")[0]}</div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="serif">🪙 ${t.cekKeterjangkauan}</h3>
+      <p class="desc">${t.cekDesc}</p>
+      <label class="field">${t.pendapatan}</label>
+      <input type="number" id="in-pendapatan" value="${pendapatan}">
+      <p class="hint">${fmt(pendapatan)}</p>
+      ${afford}
+    </div>
+
+    <div class="card">
+      <h3 class="serif" style="color:${activeGoal.color}">${t.pilihanInstrumen(tr(activeGoal.label))}</h3>
+      <p class="desc">${tr(rek.catatan)}</p>
+      ${rek.instrumen.map(it=>`
+        <div class="instrument">
+          <div class="top">
+            <p class="name" style="margin:0">${it.nama}</p>
+            <span class="badge" style="background:#F4EFE2;color:var(--brown)">${tr(it.risiko)}</span>
+          </div>
+          <p>${tr(it.alasan)}</p>
+          <div class="allocrow">
+            <div class="bar-outer"><div class="bar-inner" style="width:${it.alokasi}%;background:${activeGoal.color}"></div></div>
+            <span class="pct" style="color:${activeGoal.color}">${it.alokasi}%</span>
+          </div>
+        </div>`).join("")}
+    </div>
+
+    <div class="card">
+      <h3 class="serif">${t.top10Title}</h3>
+      <p class="desc">${t.top10Desc}</p>
+      <div class="stocklist">
+        ${TOP10_STOCKS.map(s=>`
+          <div class="row-item">
+            <div class="rankball" style="background:${s.rank<=3?'#1B4332':'#8C5E3C'}">${s.rank}</div>
+            <div style="flex:1;min-width:0">
+              <p class="name">${s.nama} <small>— ${s.ticker}</small></p>
+              <p class="meta">${tr(s.sektor)}</p>
+            </div>
+            <span style="font-weight:700;color:#1B4332;flex-shrink:0">${s.cap}</span>
+          </div>`).join("")}
+      </div>
+      <div class="info">ℹ️ ${t.top10Info}</div>
+    </div>
+
+    <div class="card">
+      <h3 class="serif">${t.portoTitle}</h3>
+      <p class="desc">${t.portoTotal}: ${fmt(totalPorto)}</p>
+      <div class="stocklist">
+        ${MY_PORTFOLIO.map(p=>{
+          const diTop10 = TOP10_TICKERS.has(p.ticker);
+          const pct = totalPorto ? (p.nominal/totalPorto)*100 : 0;
+          return `
+          <div class="row-item">
+            <span class="badge" style="background:${diTop10?'#1B4332':'#C9A227'}">${diTop10?t.portoTop10:t.portoLuar}</span>
+            <div style="flex:1;min-width:0">
+              <p class="name">${p.nama} <small>— ${p.ticker}</small></p>
+              <p class="meta">${pct.toFixed(0)}% ${t.portoPct}</p>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <p style="font-weight:700;color:#1B4332;margin:0">${p.nominal>0?fmt(p.nominal):"-"}</p>
+              <div style="display:flex;gap:.3rem;justify-content:flex-end;margin-top:.2rem">
+                <span style="font-size:.62rem;font-weight:700;padding:.1rem .35rem;border-radius:.3rem;background:${p.ytd>=0?'#E8F0E8':'#F5E4DC'};color:${p.ytd>=0?'#1B4332':'#A34A28'}">YTD ${p.ytd>=0?'+':''}${p.ytd.toFixed(1)}%</span>
+                <span style="font-size:.62rem;font-weight:700;padding:.1rem .35rem;border-radius:.3rem;background:${p.ttm>=0?'#E8F0E8':'#F5E4DC'};color:${p.ttm>=0?'#1B4332':'#A34A28'}">1Y ${p.ttm>=0?'+':''}${p.ttm.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="info">ℹ️ ${t.portoInfo}</div>
+    </div>
+
+    <div class="card">
+      <h3 class="serif">${t.etfTitle}</h3>
+      <p class="desc">${t.etfDesc}</p>
+      <div class="etflist">
+        ${ETF_LIST.map(e=>`
+          <div class="row-item">
+            <div style="flex:1;min-width:0">
+              <p class="name">${e.nama} <small>— ${e.full}</small></p>
+              <p class="meta">${tr(e.desc)}</p>
+            </div>
+            <div style="text-align:right;font-size:.72rem;color:var(--brown);flex-shrink:0">
+              <p style="margin:0">${t.biaya}: ${e.exp}</p>
+              <p style="margin:0">${t.risikoLbl}: ${tr(e.risiko)}</p>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+  `;
+
+  document.getElementById("in-target").addEventListener("change", e=>{
+    goals = goals.map(g=>g.id===active?{...g, target:Number(e.target.value)}:g); render();
+  });
+  document.getElementById("in-tahun").addEventListener("input", e=>{
+    goals = goals.map(g=>g.id===active?{...g, tahun:Number(e.target.value)}:g); render();
+  });
+  document.getElementById("in-ret").addEventListener("input", e=>{
+    goals = goals.map(g=>g.id===active?{...g, ret:Number(e.target.value)}:g); render();
+  });
+  document.getElementById("in-inf").addEventListener("input", e=>{
+    goals = goals.map(g=>g.id===active?{...g, inf:Number(e.target.value)}:g); render();
+  });
+  document.getElementById("in-progress").addEventListener("change", e=>{
+    progress[active] = Number(e.target.value); saveLocal(); render();
+  });
+  document.getElementById("in-pendapatan").addEventListener("change", e=>{
+    pendapatan = Number(e.target.value); saveLocal(); render();
+  });
+  document.getElementById("btn-download").addEventListener("click", downloadRingkasan);
+}
+
+document.getElementById("langtoggle").addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-lang]");
+  if (!btn) return;
+  lang = btn.dataset.lang; saveLocal(); render();
+});
+
+function downloadRingkasan(){
+  const t = UI[lang];
+  const res = results();
+  const totalBulanan = res.reduce((s,r)=>s+r.pmt,0);
+  const lines = [];
+  lines.push(lang==="id" ? "PANDUAN TARGET TABUNGAN & PILIHAN INVESTASI" : "SAVINGS TARGET & INVESTMENT GUIDE");
+  lines.push(t.footer);
+  lines.push("=".repeat(50));
+  lines.push("");
+  lines.push(lang==="id" ? "RINGKASAN TARGET" : "TARGET SUMMARY");
+  lines.push("-".repeat(50));
+  res.forEach(g=>{
+    lines.push(tr(g.label));
+    lines.push(`  ${t.targetHariIni.split(" (")[0]}: ${fmt(g.target)}`);
+    lines.push(`  ${lang==="id"?"Jangka waktu":"Time horizon"}: ${g.tahun} ${lang==="id"?"tahun":"years"}`);
+    lines.push(`  ${lang==="id"?"Nilai target (FV)":"Target value (FV)"}: ${fmt(g.fv)}`);
+    lines.push(`  ${t.perluDitabung}: ${fmt(g.pmt)}`);
+    lines.push("");
+  });
+  lines.push(`${lang==="id"?"TOTAL TABUNGAN PER BULAN (gabungan)":"TOTAL MONTHLY SAVINGS (combined)"}: ${fmt(totalBulanan)}`);
+  if (pendapatan > 0){
+    const rasio = (totalBulanan/pendapatan)*100;
+    lines.push(`${t.pendapatan}: ${fmt(pendapatan)} (${t.porsiPendapatan}: ${rasio.toFixed(1)}%)`);
+  }
+  lines.push("");
+  lines.push(lang==="id" ? "PROGRES TABUNGAN SAAT INI" : "CURRENT SAVINGS PROGRESS");
+  lines.push("-".repeat(50));
+  res.forEach(g=>{
+    const terkumpul = progress[g.id] || 0;
+    const persen = g.fv ? Math.min(100,(terkumpul/g.fv)*100) : 0;
+    lines.push(`${tr(g.label)}: ${fmt(terkumpul)} (${persen.toFixed(1)}% ${t.dariTarget})`);
+  });
+  lines.push("");
+  lines.push("=".repeat(50));
+  lines.push(lang==="id" ? "PILIHAN INSTRUMEN PER TUJUAN" : "SUGGESTED INSTRUMENTS PER GOAL");
+  lines.push("=".repeat(50));
+  res.forEach(g=>{
+    const rek = REKOMENDASI[g.id];
+    if(!rek) return;
+    lines.push("");
+    lines.push(tr(g.label).toUpperCase());
+    lines.push(tr(rek.catatan));
+    lines.push("");
+    rek.instrumen.forEach(it=>{
+      lines.push(`  * [${it.alokasi}%] ${it.nama} (${t.risikoLbl.toLowerCase()}: ${tr(it.risiko)})`);
+      lines.push(`    ${tr(it.alasan)}`);
+    });
+  });
+  lines.push("");
+  lines.push("=".repeat(50));
+  lines.push(lang==="id" ? "CATATAN PENTING" : "IMPORTANT NOTES");
+  lines.push("=".repeat(50));
+  if (lang==="id"){
+    lines.push("- Ini bukan rekomendasi personal, sesuaikan dengan profil risiko masing-masing.");
+    lines.push("- Angka return & inflasi adalah estimasi, hasil nyata bisa berbeda.");
+    lines.push("- Untuk dana darurat & jalan-jalan, hindari instrumen yang berfluktuasi tajam.");
+    lines.push("- Diversifikasi membantu mengurangi risiko.");
+  } else {
+    lines.push("- This is not personal advice, adjust it to your own risk profile.");
+    lines.push("- Return & inflation figures are estimates, real results may differ.");
+    lines.push("- For emergency & travel funds, avoid instruments that swing sharply in value.");
+    lines.push("- Diversification helps reduce risk.");
+  }
+
+  const blob = new Blob([lines.join("\n")], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "panduan-target-investasi.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+render();
+</script>
+</body>
+</html>
