@@ -140,6 +140,9 @@ const UI = {
     estimasiInflasi: (i)=>`Estimasi inflasi / tahun — ${i}%`,
     nilaiTargetDi: (t)=>`Nilai target di tahun ke-${t}`,
     perluDitabung: "Perlu ditabung / bulan",
+    danaEkstra: "Dana ekstra yang mau diinvestasikan sekarang (di luar tabungan rutin)",
+    ekstraJadi: (t)=>`Dana ekstra jadi (tahun ke-${t})`,
+    ekstraCatatan: "Dana ekstra ini ikut tumbuh dan mengurangi jumlah tabungan bulanan yang dibutuhkan.",
     progresTabungan: "Progres Tabungan",
     progresDesc: (l)=>`Sudah nabung berapa untuk ${l}? Tersimpan otomatis di perangkat ini.`,
     totalTerkumpul: "Total yang sudah terkumpul",
@@ -179,6 +182,9 @@ const UI = {
     estimasiInflasi: (i)=>`Estimated annual inflation — ${i}%`,
     nilaiTargetDi: (t)=>`Target value in year ${t}`,
     perluDitabung: "Needed per month",
+    danaEkstra: "Extra lump sum to invest now (outside your regular savings)",
+    ekstraJadi: (t)=>`Extra fund grows to (by year ${t})`,
+    ekstraCatatan: "This extra amount grows too, and reduces the monthly savings you need.",
     progresTabungan: "Savings Progress",
     progresDesc: (l)=>`How much have you saved for ${l} so far? Saved automatically on this device.`,
     totalTerkumpul: "Total saved so far",
@@ -210,11 +216,11 @@ const UI = {
 
 /* ---------- data (bilingual) ---------- */
 const GOALS_DEFAULT = [
-  { id:"pensiun", label:{id:"Dana Pensiun", en:"Retirement Fund"}, icon:"🏦", target:5000000000, tahun:30, ret:8, inf:4, color:"#1B4332" },
-  { id:"sekolah", label:{id:"Uang Sekolah Anak", en:"Kids' Education Fund"}, icon:"🎓", target:300000000, tahun:15, ret:7, inf:6, color:"#C9A227" },
-  { id:"kesehatan", label:{id:"Dana Kesehatan", en:"Health Fund"}, icon:"❤️", target:200000000, tahun:10, ret:6, inf:5, color:"#7A9E7E" },
-  { id:"darurat", label:{id:"Dana Darurat", en:"Emergency Fund"}, icon:"🛡️", target:60000000, tahun:2, ret:4, inf:3, color:"#8C5E3C" },
-  { id:"jalan", label:{id:"Jalan-Jalan", en:"Travel Fund"}, icon:"✈️", target:30000000, tahun:3, ret:6, inf:3, color:"#4A6670" },
+  { id:"pensiun", label:{id:"Dana Pensiun", en:"Retirement Fund"}, icon:"🏦", target:5000000000, tahun:30, ret:8, inf:4, ekstra:0, color:"#1B4332" },
+  { id:"sekolah", label:{id:"Uang Sekolah Anak", en:"Kids' Education Fund"}, icon:"🎓", target:300000000, tahun:15, ret:7, inf:6, ekstra:0, color:"#C9A227" },
+  { id:"kesehatan", label:{id:"Dana Kesehatan", en:"Health Fund"}, icon:"❤️", target:200000000, tahun:10, ret:6, inf:5, ekstra:0, color:"#7A9E7E" },
+  { id:"darurat", label:{id:"Dana Darurat", en:"Emergency Fund"}, icon:"🛡️", target:60000000, tahun:2, ret:4, inf:3, ekstra:0, color:"#8C5E3C" },
+  { id:"jalan", label:{id:"Jalan-Jalan", en:"Travel Fund"}, icon:"✈️", target:30000000, tahun:3, ret:6, inf:3, ekstra:0, color:"#4A6670" },
 ];
 
 const ETF_LIST = [
@@ -314,15 +320,18 @@ function saveLocal(){
 /* ---------- helpers ---------- */
 function fmt(n){ return "Rp" + Math.round(n||0).toLocaleString("id-ID"); }
 function tr(field){ return field[lang]; }
-function hitung(target, tahun, ret, inf){
+function hitung(target, tahun, ret, inf, ekstra){
+  ekstra = ekstra || 0;
   const fv = target * Math.pow(1+inf/100, tahun);
+  const fvEkstra = ekstra * Math.pow(1+ret/100, tahun);
+  const sisaFv = Math.max(0, fv - fvEkstra);
   const i = Math.pow(1+ret/100, 1/12) - 1;
   const n = tahun*12;
-  const pmt = i===0 ? fv/n : (fv*i)/(Math.pow(1+i,n)-1);
-  return {fv, pmt};
+  const pmt = sisaFv===0 ? 0 : (i===0 ? sisaFv/n : (sisaFv*i)/(Math.pow(1+i,n)-1));
+  return {fv, fvEkstra, sisaFv, pmt};
 }
 function results(){
-  return goals.map(g=>{ const {fv,pmt}=hitung(g.target,g.tahun,g.ret,g.inf); return {...g, fv, pmt}; });
+  return goals.map(g=>{ const r=hitung(g.target,g.tahun,g.ret,g.inf,g.ekstra); return {...g, ...r}; });
 }
 
 /* ---------- render ---------- */
@@ -404,6 +413,11 @@ function render(){
           <label class="field">${t.estimasiInflasi(activeGoal.inf)}</label>
           <input type="range" id="in-inf" min="0" max="12" step="0.5" value="${activeGoal.inf}">
         </div>
+        <div>
+          <label class="field">${t.danaEkstra}</label>
+          <input type="number" id="in-ekstra" value="${activeGoal.ekstra}">
+          <p class="hint">${fmt(activeGoal.ekstra)}</p>
+        </div>
       </div>
       <div class="resultrow">
         <div class="item">
@@ -415,6 +429,12 @@ function render(){
           <p class="big serif" style="color:${activeGoal.color}">${fmt(activeGoal.pmt)}</p>
         </div>
       </div>
+      ${activeGoal.ekstra > 0 ? `
+      <div class="kv" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)">
+        <span class="k">${t.ekstraJadi(activeGoal.tahun)}</span>
+        <span class="v">${fmt(activeGoal.fvEkstra)}</span>
+      </div>
+      <p class="desc" style="margin:0">${t.ekstraCatatan}</p>` : ""}
     </div>
 
     <div class="card">
@@ -544,6 +564,9 @@ function render(){
   document.getElementById("in-inf").addEventListener("input", e=>{
     goals = goals.map(g=>g.id===active?{...g, inf:Number(e.target.value)}:g); render();
   });
+  document.getElementById("in-ekstra").addEventListener("change", e=>{
+    goals = goals.map(g=>g.id===active?{...g, ekstra:Number(e.target.value)}:g); render();
+  });
   document.getElementById("in-progress").addEventListener("change", e=>{
     progress[active] = Number(e.target.value); saveLocal(); render();
   });
@@ -575,6 +598,9 @@ function downloadRingkasan(){
     lines.push(`  ${t.targetHariIni.split(" (")[0]}: ${fmt(g.target)}`);
     lines.push(`  ${lang==="id"?"Jangka waktu":"Time horizon"}: ${g.tahun} ${lang==="id"?"tahun":"years"}`);
     lines.push(`  ${lang==="id"?"Nilai target (FV)":"Target value (FV)"}: ${fmt(g.fv)}`);
+    if (g.ekstra > 0){
+      lines.push(`  ${lang==="id"?"Dana ekstra sekarang":"Extra lump sum now"}: ${fmt(g.ekstra)} → ${fmt(g.fvEkstra)} (${lang==="id"?"tahun ke-":"year "}${g.tahun})`);
+    }
     lines.push(`  ${t.perluDitabung}: ${fmt(g.pmt)}`);
     lines.push("");
   });
